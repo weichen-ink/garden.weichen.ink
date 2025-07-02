@@ -121,10 +121,12 @@ layout: base.njk
     {% endif %}
   </div>
 
-  {% if (taxonomyType == "tags" and collections.tagList.length == 0) or (taxonomyType == "categories" and collections.categoryList.length == 0) %}
-    {% if taxonomyType == "tags" %}
+  {% if taxonomyType == "tags" %}
+    {% if collections.tagList.length == 0 and untaggedPosts.length == 0 %}
       <p class="no-tags-message">暂时还没有添加任何标签</p>
-    {% else %}
+    {% endif %}
+  {% else %}
+    {% if collections.categoryList.length == 0 and uncategorizedPosts.length == 0 %}
       <p class="no-tags-message">暂时还没有添加任何分类</p>
     {% endif %}
   {% endif %}
