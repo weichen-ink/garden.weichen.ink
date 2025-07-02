@@ -1,0 +1,54 @@
+---
+layout: base.njk
+---
+
+{# 
+  NOTE.NJK - 默认页面布局模板
+  
+  ⚠️ 重要说明：此模板被设置为全局默认布局
+  在 .eleventy.js 中通过以下代码设置：
+  eleventyConfig.addGlobalData("layout", "note.njk");
+  
+  这意味着所有没有在frontmatter中指定layout的markdown文件
+  都会自动使用此模板，无需手动指定。
+  
+  如需修改默认布局，请在 .eleventy.js 中修改配置，
+  而不是删除或重命名此文件。
+#}
+
+<div class="article-content{% if cssclasses %} {{ cssclasses }}{% endif %}">
+  {% if not hideTitle %}
+  <div class="note-header">
+    <h1 class="note-title">{{ title or (page.fileSlug | split('/') | last) }}</h1>
+    
+    <div class="note-meta">
+      {% if updated or created or date %}
+      <time class="note-date">
+        更新于 {{ (updated or created or date) | date("YYYY年MM月DD日") }}
+      </time>
+      {% endif %}
+      
+      {% if category %}
+      <span class="note-category">
+        📂 <a href="/categories/{{ category | slug }}/">{{ category }}</a>
+      </span>
+      {% endif %}
+      
+      {% if tags and tags.length > 0 %}
+      <div class="note-tags">
+        {% for tag in tags %}
+          <a href="/tags/{{ tag | slug }}/" class="note-tag">#{{ tag }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="note-content">
+    {{ content | wikilink(collections) | externalLinks | safe }}
+  </div>
+</div>
+
+<!-- 评论系统 -->
+{% include "comments.njk" %}

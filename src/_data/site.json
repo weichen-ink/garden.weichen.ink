@@ -1,0 +1,13 @@
+{
+  "title": "我的数字花园",
+  "description": "这里是我的第二大脑，用于连接想法、整理知识",
+  "author": "你的名字",
+  "year": 2024,
+  "navigation": [
+    { "title": "首页", "url": "/" },
+    { "title": "分类", "url": "/categories/" },
+    { "title": "标签", "url": "/tags/" },
+    { "title": "关于", "url": "/关于/" },
+    { "title": "联系", "url": "/联系/" }
+  ]
+}

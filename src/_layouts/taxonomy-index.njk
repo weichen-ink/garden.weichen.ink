@@ -1,0 +1,131 @@
+---
+layout: base.njk
+---
+
+<div class="note-header">
+  <h1 class="note-title">
+    {% if taxonomyType == "tags" %}
+      <span class="list-icon">#</span>
+    {% else %}
+      <span class="list-icon">📂</span>
+    {% endif %}
+    {{ title }}
+  </h1>
+  <div class="note-meta">
+    {% if taxonomyType == "tags" %}
+      {% set untaggedCount = (collections.content | selectattr("data.tags", "undefined")).length %}
+      <span class="note-count">共 {{ (collections.tagList.length + (1 if untaggedCount > 0 else 0)) }} 个标签</span>
+    {% else %}
+      {% set uncategorizedCount = (collections.content | rejectattr("data.category")).length %}
+      <span class="note-count">共 {{ (collections.categoryList.length + (1 if uncategorizedCount > 0 else 0)) }} 个分类</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="note-content">
+  <!-- 显示页面正文内容 -->
+  {% if content and content.trim() %}
+    <div class="page-description">
+      {{ content | safe }}
+    </div>
+  {% endif %}
+  
+  <div class="taxonomy-grid">
+    {% if taxonomyType == "tags" %}
+      <!-- 构建普通标签列表 -->
+      {% set normalTagItems = [] %}
+      {% for tag in collections.tagList %}
+        {% set tagPosts = collections.postsByTag[tag] %}
+        {% if tagPosts and tagPosts.length > 0 %}
+          {% set normalTagItems = normalTagItems.concat([{
+            name: tag,
+            count: tagPosts.length,
+            url: "/tags/" + tag + "/"
+          }]) %}
+        {% endif %}
+      {% endfor %}
+      
+      <!-- 按数量倒序排列普通标签 -->
+      {% set sortedNormalTagItems = normalTagItems | sort(attribute="count") | reverse %}
+      
+      <!-- 计算无标签项，排除_index.md文件 -->
+      {% set untaggedPosts = [] %}
+      {% for item in collections.content %}
+        {% set fileName = item.inputPath.split('/').pop() %}
+        {% if (not item.data.tags or item.data.tags.length == 0) and fileName != "_index.md" %}
+          {% set untaggedPosts = untaggedPosts.concat([item]) %}
+        {% endif %}
+      {% endfor %}
+      
+      <!-- 将无标签项添加到最后 -->
+      {% set sortedTagItems = sortedNormalTagItems %}
+      {% if untaggedPosts.length > 0 %}
+        {% set sortedTagItems = sortedTagItems.concat([{
+          name: "无标签",
+          count: untaggedPosts.length,
+          url: "/tags/untagged/"
+        }]) %}
+      {% endif %}
+      
+      {% for item in sortedTagItems %}
+        <a href="{{ item.url }}" class="taxonomy-button taxonomy-tag">
+          <span class="taxonomy-icon">#</span>
+          <span class="taxonomy-name">{{ item.name }}</span>
+          <span class="taxonomy-count">{{ item.count }}</span>
+        </a>
+      {% endfor %}
+      
+    {% else %}
+      <!-- 构建普通分类列表 -->
+      {% set normalCategoryItems = [] %}
+      {% for category in collections.categoryList %}
+        {% set categoryPosts = collections.postsByCategory[category] %}
+        {% if categoryPosts and categoryPosts.length > 0 %}
+          {% set normalCategoryItems = normalCategoryItems.concat([{
+            name: category,
+            count: categoryPosts.length,
+            url: "/categories/" + category + "/"
+          }]) %}
+        {% endif %}
+      {% endfor %}
+      
+      <!-- 按数量倒序排列普通分类 -->
+      {% set sortedNormalCategoryItems = normalCategoryItems | sort(attribute="count") | reverse %}
+      
+      <!-- 计算未分类项，排除_index.md文件 -->
+      {% set uncategorizedPosts = [] %}
+      {% for item in collections.content %}
+        {% set fileName = item.inputPath.split('/').pop() %}
+        {% if not item.data.category and fileName != "_index.md" %}
+          {% set uncategorizedPosts = uncategorizedPosts.concat([item]) %}
+        {% endif %}
+      {% endfor %}
+      
+      <!-- 将未分类项添加到最后 -->
+      {% set sortedCategoryItems = sortedNormalCategoryItems %}
+      {% if uncategorizedPosts.length > 0 %}
+        {% set sortedCategoryItems = sortedCategoryItems.concat([{
+          name: "未分类",
+          count: uncategorizedPosts.length,
+          url: "/categories/uncategorized/"
+        }]) %}
+      {% endif %}
+      
+      {% for item in sortedCategoryItems %}
+        <a href="{{ item.url }}" class="taxonomy-button taxonomy-category">
+          <span class="taxonomy-icon">📂</span>
+          <span class="taxonomy-name">{{ item.name }}</span>
+          <span class="taxonomy-count">{{ item.count }}</span>
+        </a>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  {% if (taxonomyType == "tags" and collections.tagList.length == 0) or (taxonomyType == "categories" and collections.categoryList.length == 0) %}
+    {% if taxonomyType == "tags" %}
+      <p class="no-tags-message">暂时还没有添加任何标签</p>
+    {% else %}
+      <p class="no-tags-message">暂时还没有添加任何分类</p>
+    {% endif %}
+  {% endif %}
+</div>

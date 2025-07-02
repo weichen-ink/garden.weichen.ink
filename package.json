@@ -1,0 +1,63 @@
+{
+  "name": "digital-garden-eleventy-theme",
+  "version": "1.0.0",
+  "description": "一个现代、优雅的 Eleventy 数字花园主题，专为知识管理和思维连接而设计",
+  "main": ".eleventy.js",
+  "scripts": {
+    "build": "npx @11ty/eleventy",
+    "serve": "npx @11ty/eleventy --serve",
+    "start": "npm run serve",
+    "debug": "npx @11ty/eleventy --serve --quiet",
+    "clean": "rm -rf _site",
+    "preview": "npm run build && npx serve _site",
+    "theme:dev": "git switch theme-dev",
+    "theme:merge": "git switch main && git merge theme-dev",
+    "theme:push": "git switch theme-dev && git push upstream theme-dev:main && git push origin theme-dev",
+    "theme:pull": "git switch theme-dev && git pull upstream main"
+  },
+  "keywords": [
+    "eleventy",
+    "eleventy-theme",
+    "digital-garden",
+    "notes",
+    "wiki",
+    "static-site-generator",
+    "double-linking",
+    "backlinks",
+    "knowledge-management",
+    "personal-wiki",
+    "zettelkasten",
+    "obsidian",
+    "roam-research",
+    "things3-design",
+    "responsive-design"
+  ],
+  "author": "Digital Garden Theme Contributors",
+  "license": "MIT",
+  "homepage": "https://github.com/weichen-ink/digital-garden-eleventy-theme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weichen-ink/digital-garden-eleventy-theme.git"
+  },
+  "bugs": {
+    "url": "https://github.com/weichen-ink/digital-garden-eleventy-theme/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.2",
+    "esbuild": "^0.25.5",
+    "html-minifier-terser": "^7.2.0",
+    "lightningcss": "^1.30.1"
+  },
+  "dependencies": {
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.2.0",
+    "markdown-it-obsidian-callouts": "^0.3.2",
+    "markdown-it-task-lists": "^2.1.1",
+    "shiki": "^3.7.0",
+    "slugify": "^1.6.6"
+  }
+}

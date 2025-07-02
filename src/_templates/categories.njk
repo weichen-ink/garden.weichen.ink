@@ -1,0 +1,15 @@
+---
+layout: article-list.njk
+hideSidebar: true
+pagination:
+  data: collections.categoryList
+  size: 1
+  alias: categoryName
+permalink: /categories/{{ categoryName | slug }}/
+eleventyExcludeFromCollections: true
+eleventyComputed:
+  title: "分类：{{ categoryName }}"
+  description: "包含分类 {{ categoryName }} 的所有文章"
+  listType: "category"
+  itemName: "{{ categoryName }}"
+---

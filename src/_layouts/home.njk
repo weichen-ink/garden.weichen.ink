@@ -1,0 +1,59 @@
+---
+layout: base.njk
+---
+
+{%- if garden.homepage.customArticlePath -%}
+  {%- set customFile = garden.homepage.customArticlePath -%}
+  {%- set customArticlePath = "./" + inputDir + "/" + customFile -%}
+  {%- set customArticle = collections.content | getByInputPath(customArticlePath) -%}
+  {%- if customArticle -%}
+    <div class="home-content note-content">
+      {{ customArticle.templateContent | wikilink(collections) | externalLinks | safe }}
+    </div>
+  {%- else -%}
+    <div class="home-content note-content">
+      <p>⚠️ 自定义首页文章 <code>{{ inputDir }}/{{ customFile }}</code> 不存在，请检查配置。</p>
+    </div>
+  {%- endif -%}
+{%- else -%}
+  <div class="home-content note-content">
+    {{ content | wikilink(collections) | externalLinks | safe }}
+  </div>
+{%- endif -%}
+
+<div class="notes-grid">
+  {%- if garden.homepage.showRecentlyCreated -%}
+  <div class="notes-section">
+    <h2>🆕 最近创建</h2>
+    <ul class="notes-list">
+      {%- set recentCreated = collections.content | sortByCreated | limit(garden.homepage.recentNotesCount) -%}
+      {%- for note in recentCreated -%}
+      {%- if note and note.data and note.data.title -%}
+      <li class="note-item">
+        <a href="{{ note.url }}" class="note-link internal-link">{{ note.data.title }}</a>
+        <time class="note-date">{{ (note.data.created or note.data.date or note.date) | date("MM-DD") }}</time>
+      </li>
+      {%- endif -%}
+      {%- endfor -%}
+    </ul>
+  </div>
+  {%- endif -%}
+
+  {%- if garden.homepage.showRecentlyUpdated -%}
+  <div class="notes-section">
+    <h2>⏰ 最近更新</h2>
+    <ul class="notes-list">
+      {%- set recentUpdated = collections.content | sortByUpdated | limit(garden.homepage.recentNotesCount) -%}
+      {%- for note in recentUpdated -%}
+      {%- if note and note.data and note.data.title -%}
+      <li class="note-item">
+        <a href="{{ note.url }}" class="note-link internal-link">{{ note.data.title }}</a>
+        <time class="note-date">{{ (note.data.updated or note.data.date or note.date) | date("MM-DD") }}</time>
+      </li>
+      {%- endif -%}
+      {%- endfor -%}
+    </ul>
+  </div>
+  {%- endif -%}
+</div>
+

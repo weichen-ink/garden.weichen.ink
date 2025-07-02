@@ -1,0 +1,12 @@
+<!-- 评论系统组件 -->
+{% if garden.comments.enabled and garden.comments.html and garden.comments.html.trim() %}
+  <div class="comments-section">
+    <div class="comments-divider">
+      <h3 class="comments-title">{{ garden.comments.title or "💬 评论" }}</h3>
+    </div>
+    
+    <div class="comments-container">
+      {{ garden.comments.html | safe }}
+    </div>
+  </div>
+{% endif %}
