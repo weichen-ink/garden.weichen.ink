@@ -95,11 +95,13 @@
             <ul class="backlinks-list">
               {% for link in backlinks %}
               {% if link and link.title and link.url %}
-              <li class="backlink-item internal-link" data-url="{{ link.url }}" data-note-title="{{ link.title }}">
-                <div class="backlink-title">{{ link.title }}</div>
-                {% if link.excerpt %}
-                <p class="backlink-excerpt">{{ link.excerpt | safe }}</p>
-                {% endif %}
+              <li>
+                <a href="{{ link.url }}" class="backlink-item internal-link" data-note-title="{{ link.title }}" aria-label="查看笔记：{{ link.title }}">
+                  <div class="backlink-title">{{ link.title }}</div>
+                  {% if link.excerpt %}
+                  <p class="backlink-excerpt">{{ link.excerpt | safe }}</p>
+                  {% endif %}
+                </a>
               </li>
               {% endif %}
               {% endfor %}

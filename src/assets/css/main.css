@@ -1085,6 +1085,7 @@ body {
 }
 
 .backlink-item {
+  display: block;
   margin-bottom: var(--space-2);
   padding: var(--space-3);
   background-color: var(--color-bg-card);
@@ -1092,7 +1093,14 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-normal);
-  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  /* 移动端触摸优化 */
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  touch-action: manipulation;
+  /* 确保在所有设备上都可点击 */
+  min-height: 44px; /* iOS推荐的最小触摸目标 */
+  position: relative;
 }
 
 .backlink-item:hover {
@@ -1119,6 +1127,21 @@ body {
   color: var(--color-text-muted);
   line-height: var(--leading-normal);
   margin-bottom: 0;
+}
+
+/* 移动端反向链接卡片字号优化 */
+@media (max-width: 768px) {
+  .backlink-title {
+    font-size: var(--text-base); /* 从 --text-sm 提升到 --text-base */
+  }
+  
+  .backlink-excerpt {
+    font-size: var(--text-sm); /* 从 --text-xs 提升到 --text-sm */
+  }
+  
+  .backlink-item {
+    padding: var(--space-4); /* 增加内边距以适应更大字体 */
+  }
 }
 
 /* ==================== 首页 ==================== */
