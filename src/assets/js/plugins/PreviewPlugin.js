@@ -137,17 +137,11 @@ class PreviewPlugin extends Plugin {
     }, this.config.hideDelay);
   }
 
-  // 文档点击事件处理 - 处理预览关闭和反向链接点击
+  // 文档点击事件处理 - 处理预览关闭
   handleDocumentClick(e) {
-    // 处理反向链接卡片点击
-    const backlinkItem = e.target.closest('.backlink-item');
-    if (backlinkItem && backlinkItem.getAttribute('data-url')) {
-      e.preventDefault();
-      const url = backlinkItem.getAttribute('data-url');
-      window.location.href = url;
-      return;
-    }
-
+    // 反向链接现在使用语义化的 <a> 标签，浏览器会自动处理点击导航
+    // 不再需要 JavaScript 手动处理反向链接点击
+    
     // 如果点击的不是预览窗口或链接元素，立即关闭预览
     if (this.isVisible && 
         !this.previewPopup.contains(e.target) && 
