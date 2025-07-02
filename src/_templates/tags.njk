@@ -1,0 +1,15 @@
+---
+layout: article-list.njk
+hideSidebar: true
+pagination:
+  data: collections.tagList
+  size: 1
+  alias: tagName
+permalink: /tags/{{ tagName | slug }}/
+eleventyExcludeFromCollections: true
+eleventyComputed:
+  title: "标签：{{ tagName }}"
+  description: "包含标签 {{ tagName }} 的所有文章"
+  listType: "tag"
+  itemName: "{{ tagName }}"
+---

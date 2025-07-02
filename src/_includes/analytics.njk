@@ -1,0 +1,4 @@
+<!-- 网站统计组件 -->
+{% if garden.analytics.enabled and garden.analytics.html and garden.analytics.html.trim() %}
+  {{ garden.analytics.html | safe }}
+{% endif %}

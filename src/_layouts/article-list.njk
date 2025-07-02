@@ -1,0 +1,114 @@
+---
+layout: base.njk
+hideSidebar: true
+---
+
+
+{% if listType == "folder" %}
+  {# 自动从文件路径推导文件夹名，如果没有手动设置itemName的话 #}
+  {% if not itemName %}
+    {% set pathParts = page.inputPath.split('/') %}
+    {% set folderName = pathParts[pathParts.length - 2] %}
+    {% set autoItemName = folderName %}
+  {% else %}
+    {% set autoItemName = itemName %}
+  {% endif %}
+  {% set posts = collections.postsByFolder[autoItemName] %}
+  {# 优先使用 _index.md 文件中的 title，如果没有则使用文件夹名 #}
+  {% set displayName = title or autoItemName %}
+  {% set icon = "📁" %}
+  {% set backUrl = "/" %}
+  {% set backText = "← 首页" %}
+{% elif listType == "tag" %}
+  {% if itemName == "untagged" %}
+    {% set posts = [] %}
+    {% for item in collections.content %}
+      {% set fileName = item.inputPath.split('/').pop() %}
+      {% if (not item.data.tags or item.data.tags.length == 0) and fileName != "_index.md" %}
+        {% set posts = posts.concat([item]) %}
+      {% endif %}
+    {% endfor %}
+    {% set displayName = "无标签" %}
+  {% else %}
+    {% set posts = collections.postsByTag[itemName] %}
+    {% set displayName = itemName %}
+  {% endif %}
+  {% set icon = "#" %}
+  {% set backUrl = "/tags/" %}
+  {% set backText = "← 所有标签" %}
+{% elif listType == "category" %}
+  {% if itemName == "uncategorized" %}
+    {% set posts = [] %}
+    {% for item in collections.content %}
+      {% set fileName = item.inputPath.split('/').pop() %}
+      {% if not item.data.category and fileName != "_index.md" %}
+        {% set posts = posts.concat([item]) %}
+      {% endif %}
+    {% endfor %}
+    {% set displayName = "未分类" %}
+  {% else %}
+    {% set posts = collections.postsByCategory[itemName] %}
+    {% set displayName = itemName %}
+  {% endif %}
+  {% set icon = "📂" %}
+  {% set backUrl = "/categories/" %}
+  {% set backText = "← 所有分类" %}
+{% endif %}
+
+<div class="note-header">
+  <div class="note-header-main">
+    <h1 class="note-title">
+      <span class="list-icon">{{ icon }}</span>
+      {{ displayName }}
+    </h1>
+    <a href="{{ backUrl }}" class="back-button">{{ backText }}</a>
+  </div>
+  <div class="note-meta">
+    <span class="note-count">{{ posts.length }} 篇文章</span>
+  </div>
+</div>
+
+<div class="note-content">
+  <!-- 显示页面正文内容 -->
+  {% if content and content.trim() %}
+    <div class="page-description">
+      {{ content | safe }}
+    </div>
+  {% endif %}
+
+  {% if posts and posts.length > 0 %}
+    <div class="posts-list">
+      {% for post in posts %}
+        <article class="post-item">
+          <time class="post-date">
+            {% if post.data.date %}
+              {{ post.data.date | formatDate }}
+            {% else %}
+              {{ "2024-01-01" | formatDate }}
+            {% endif %}
+          </time>
+          
+          <div class="post-title">
+            <a href="{{ post.url }}" class="post-link internal-link">
+              {{ post.data.title or post.fileSlug }}
+            </a>
+          </div>
+          
+          <div class="post-tags">
+            {% if post.data.tags and post.data.tags.length > 0 %}
+              {% for tag in post.data.tags %}
+                {% if listType == "tag" and tag == itemName %}
+                  <span class="post-tag current-tag">{{ tag }}</span>
+                {% else %}
+                  <a href="/tags/{{ tag | slug }}/" class="post-tag">{{ tag }}</a>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="no-posts-message">这个{{ "文件夹" if listType == "folder" else ("标签" if listType == "tag" else "分类") }}下还没有文章。</p>
+  {% endif %}
+</div>

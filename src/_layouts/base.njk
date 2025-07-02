@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if title %}{{ title }} - {% endif %}{{ (garden.site and garden.site.title) | default(site.title) | default("Digital Garden") }}</title>
+  <meta name="description" content="{{ description | default((garden.site and garden.site.description) | default(site.description)) }}">
+  
+  <!-- 主要样式文件 -->
+  <link rel="stylesheet" href="{{ 'src/assets/css/main.css' | hash }}">
+  
+  
+  <!-- 预加载主要JavaScript -->
+  <link rel="preload" href="{{ 'src/assets/js/main.js' | hash }}" as="script" crossorigin="anonymous">
+</head>
+<body class="{% if hideSidebar %}no-sidebar{% endif %}{% if not garden.theme.showHeadingMarkers %} hide-heading-markers{% endif %}">
+  <!-- 顶部导航 -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-content">
+        <h1 class="site-title">
+          <a href="/">
+            {% if garden.site and garden.site.logo %}
+            <img src="{{ garden.site.logo }}" alt="{{ (garden.site and garden.site.title) | default(site.title) | default('Digital Garden') }}" class="site-logo">
+            {% else %}
+            {{ (garden.site and garden.site.title) | default(site.title) | default("Digital Garden") }}
+            {% endif %}
+          </a>
+        </h1>
+        
+        <nav class="main-nav">
+          <button class="mobile-nav-toggle" onclick="toggleMobileNav()">☰</button>
+          <ul class="nav-list" id="navList">
+            {% if garden.menu %}
+            {% for menuItem in garden.menu %}
+            <li><a href="{{ menuItem.url }}" {% if page.url == menuItem.url %}class="active"{% endif %}>{{ menuItem.name }}</a></li>
+            {% endfor %}
+            {% endif %}
+            {% if garden.search.enabled %}
+            <li><button class="search-toggle" onclick="toggleSearch()">🔍</button></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      
+      {% if garden.search.enabled %}
+      <!-- 搜索遮罩 -->
+      <div class="search-overlay" id="searchOverlay" onclick="closeSearch()"></div>
+      
+      <!-- 搜索框 -->
+      <div class="search-container" id="searchContainer">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="搜索笔记...">
+          <button class="search-clear" id="searchClear" style="display: none;">✕</button>
+        </div>
+        <div class="search-results-container" id="searchResultsContainer">
+          <div class="search-suggestions" id="searchSuggestions"></div>
+          <div class="search-results" id="searchResults"></div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </header>
+
+
+  <!-- 主要内容区域 -->
+  <main class="main-content">
+    <div class="container">
+      <div class="content-grid{% if hideSidebar %} content-grid--no-sidebar{% endif %}">
+        <!-- 主要内容 -->
+        <article class="main-article">
+          {{ content | safe }}
+        </article>
+        
+        <!-- 侧边栏 -->
+        {% if not hideSidebar %}
+        <aside class="sidebar">
+          {% set pageHasHeadings = (page.templateContent or content) | hasHeadings %}
+          {% if pageHasHeadings %}
+          <div class="toc-section">
+            <h3>📋 目录</h3>
+            <div class="table-of-contents" id="tableOfContents">
+              <!-- 目录将通过JavaScript生成 -->
+            </div>
+          </div>
+          {% endif %}
+          
+          <!-- 反向链接 -->
+          {% if collections %}
+          {% set backlinks = collections | backlinks(page) %}
+          {% if backlinks and backlinks.length > 0 %}
+          <div class="backlinks-section">
+            <h3>🔗 反向链接</h3>
+            <ul class="backlinks-list">
+              {% for link in backlinks %}
+              {% if link and link.title and link.url %}
+              <li class="backlink-item internal-link" data-url="{{ link.url }}" data-note-title="{{ link.title }}">
+                <div class="backlink-title">{{ link.title }}</div>
+                {% if link.excerpt %}
+                <p class="backlink-excerpt">{{ link.excerpt | safe }}</p>
+                {% endif %}
+              </li>
+              {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          {% endif %}
+          
+        </aside>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <!-- 用户自定义footer内容（如果有的话） -->
+        {% if garden.footer and garden.footer.trim() %}
+        <div class="custom-footer">{{ garden.footer | markdown | externalLinks | safe }}</div>
+        {% else %}
+        <!-- 默认footer内容 -->
+        <div class="footer-main">
+          <p class="footer-copyright">&copy; {{ (garden.site and garden.site.year) | default(site.year) | default(2024) }} {{ (garden.site and garden.site.author) | default(site.author) | default("Digital Garden") }}. All rights reserved.</p>
+        </div>
+        {% endif %}
+        
+        <!-- 主题信息和技术栈 - 不可被配置覆盖 -->
+        <div class="theme-credits">
+          <p class="footer-credits">
+            Built with <span class="heart">♥️</span> using <a href="https://www.11ty.dev/" target="_blank" rel="noopener">Eleventy</a> • 
+            Theme designed by <a href="{{ themeInfo.website }}" target="_blank" rel="noopener">{{ themeInfo.designer }}</a>
+          </p>
+          <p class="footer-motto">让想法自由连接，让知识自然生长 🌱</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 悬停预览容器 -->
+  <div id="note-preview" class="note-preview-popup"></div>
+  
+  <!-- 返回顶部按钮 -->
+  <button id="back-to-top" class="back-to-top" onclick="scrollToTop()" title="返回顶部">
+    ↑
+  </button>
+  
+  <!-- ES模块化JavaScript -->
+  <script type="module" src="{{ 'src/assets/js/main.js' | hash }}"></script>
+  
+  <!-- 网站统计 -->
+  {% include "analytics.njk" %}
+</body>
+</html>
