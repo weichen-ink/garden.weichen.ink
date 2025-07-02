@@ -3,25 +3,6 @@ eleventyComputed:
   permalink: "{% if garden.outputs.sitemap.enabled %}/sitemap.xml{% else %}false{% endif %}"
 layout: false
 ---
-{# 
-  Sitemap.xml 生成模板
-  
-  更新频率说明:
-  - always: 每次访问都可能变化（如实时数据页面）
-  - hourly: 每小时更新（如新闻网站）
-  - daily: 每天更新（如博客首页）
-  - weekly: 每周更新（适合知识库、数字花园等内容更新不频繁的网站）
-  - monthly: 每月更新（如产品页面）
-  - yearly: 每年更新（如关于页面）
-  - never: 从不更新（如存档页面）
-  
-  优先级说明(0.0-1.0):
-  - 1.0: 最重要（网站首页）
-  - 0.8: 很重要（主要栏目页）
-  - 0.6: 重要（普通文章页面，适合内容型网站）
-  - 0.4: 一般重要（标签页、分类页）
-  - 0.1: 较低重要性（存档页等）
-#}
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 {%- for page in collections.content -%}
