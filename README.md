@@ -169,6 +169,28 @@ tags: [笔记方法, 双链笔记, 效率工具]
 - **纯 CSS** - 无框架依赖
 - **Vanilla JavaScript** - 搜索和交互功能
 
+## 🚀 部署配置
+
+项目使用 GitHub Actions 自动部署到 VPS。
+
+### 必需的 Secrets
+
+在 GitHub 仓库设置中添加以下 Secrets：
+
+```
+HOST        # VPS IP 地址或域名
+USERNAME    # SSH 用户名
+SSH_KEY     # SSH 私钥内容
+PORT        # SSH 端口（默认 22）
+DEPLOY_PATH # 部署路径，如 /var/www/html/
+```
+
+### 部署流程
+
+1. 推送代码到 `main` 分支
+2. GitHub Actions 自动构建
+3. 使用 rsync 同步到 VPS
+
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。

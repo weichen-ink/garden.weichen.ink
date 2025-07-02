@@ -42,7 +42,7 @@ module.exports = {
     // 指定content目录下的文件名，系统会自动拼接完整路径
     // 例如: "欢迎.md" 或 "关于项目.md"，对应 content/欢迎.md
     // 例如："post/测试.md"，对应 content目录下的post文件夹中的测试.md文件。注意：路径前面不要写"/"符号
-    customArticlePath: "首页.md" // 对应 content/_index.md 文件
+    customArticlePath: "首页.md" // 对应 content/主题文档示范.md 文件
   },
   
   // 搜索功能配置
