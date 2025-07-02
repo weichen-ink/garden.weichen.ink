@@ -4,7 +4,6 @@ title: 主题文档首页
 description: 欢迎来到我的数字花园
 hideSidebar: true
 hideTitle: true
-permalink: /
 ---
 ## 你好 👏
 
