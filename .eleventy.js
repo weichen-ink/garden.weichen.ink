@@ -607,6 +607,7 @@ module.exports = function(eleventyConfig) {
       .trim();
     
     // 处理双链 - 将 [[filename]] 转换为对应的标题，使用和wikilink过滤器完全相同的逻辑
+    // 为来自双链的文本添加特殊标记，方便后续识别
     cleanContent = cleanContent.replace(/\[\[([^\]]+)\]\]/g, (match, noteTitle) => {
       // 查找对应的笔记，使用和wikilink完全相同的逻辑
       let targetNote = null;
@@ -628,14 +629,13 @@ module.exports = function(eleventyConfig) {
       }
       
       // 使用和wikilink过滤器相同的标题逻辑
-      if (targetNote) {
-        return (targetNote.data && targetNote.data.title) || 
-               (targetNote.fileSlug && targetNote.fileSlug.split('/').pop()) || 
-               noteTitle;
-      }
+      const resolvedTitle = targetNote ? 
+        ((targetNote.data && targetNote.data.title) || 
+         (targetNote.fileSlug && targetNote.fileSlug.split('/').pop()) || 
+         noteTitle) : noteTitle;
       
-      // 如果找不到对应文件，保留原始文本
-      return noteTitle;
+      // 为来自双链的文本添加特殊标记
+      return `⟪WIKILINK:${resolvedTitle}⟫`;
     });
     
     // 查找包含搜索词的部分
@@ -663,10 +663,25 @@ module.exports = function(eleventyConfig) {
         excerpt = excerpt + '...';
       }
       
-      // 高亮显示搜索词
-      const highlighted = excerpt
-        .replace(new RegExp(searchTerm, 'gi'), 
-          `<mark class="backlink-highlight">${searchTerm}</mark>`);
+      // 智能高亮显示搜索词 - 只高亮来自双链的文本
+      let highlighted = excerpt;
+      
+      // 查找所有来自双链的标记文本
+      const wikilinkPattern = new RegExp(`⟪WIKILINK:([^⟫]*)⟫`, 'gi');
+      highlighted = highlighted.replace(wikilinkPattern, (match, wikilinkText) => {
+        // 检查这个双链文本是否包含搜索词
+        if (wikilinkText.toLowerCase().includes(searchTerm.toLowerCase())) {
+          // 高亮双链中的搜索词
+          const highlightedWikilink = wikilinkText.replace(new RegExp(searchTerm, 'gi'), 
+            `<mark class="backlink-highlight">${searchTerm}</mark>`);
+          return highlightedWikilink;
+        }
+        // 如果不包含搜索词，直接返回原文本（移除标记）
+        return wikilinkText;
+      });
+      
+      // 最后清理掉所有剩余的特殊标记
+      highlighted = highlighted.replace(/⟪WIKILINK:([^⟫]*)⟫/g, '$1');
       
       return highlighted;
     }
