@@ -5,8 +5,8 @@ const markdownItTaskLists = require("markdown-it-task-lists");
 const markdownItObsidianCallouts = require("markdown-it-obsidian-callouts");
 // 移除旧的语法高亮插件，改用Shiki
 // const syntaxHighlight = require("@11ty/eleventy-plugin-syntaxhighlight");
-const eleventyShikiPlugin = require("./src/assets/js/plugins/EleventyShikiPlugin.js");
-const wikilinkPlugin = require("./src/assets/js/plugins/WikilinkPlugin.js");
+const eleventyShikiPlugin = require("./src/eleventy-plugins/EleventyShikiPlugin.js");
+const wikilinkPlugin = require("./src/eleventy-plugins/WikilinkPlugin.js");
 const fs = require("fs");
 const path = require("path");
 const { minify: htmlMinify } = require("html-minifier-terser");
@@ -45,8 +45,8 @@ const inputDir = "content";  // 内容目录 (用户 markdown 文件)
 const outputDir = "_site";   // 输出目录
 
 // 导入简化的资源构建器和完整的报告系统
-const AssetBuilder = require("./src/utils/AssetBuilder.js");
-const { EnhancedWarningCollector } = require("./src/utils/ReportingSystem.js");
+const AssetBuilder = require("./src/build-tools/AssetBuilder.js");
+const { EnhancedWarningCollector } = require("./src/build-tools/ReportingSystem.js");
 
 // 初始化全局警告收集器（完整功能版本）
 if (!global.buildWarningCollector) {
@@ -160,7 +160,7 @@ module.exports = function(eleventyConfig) {
     global.buildWarningCollector.clear();
     
     try {
-      const wikilinkCaches = require('./src/assets/js/plugins/WikilinkPlugin.js');
+      const wikilinkCaches = require('./src/eleventy-plugins/WikilinkPlugin.js');
       if (wikilinkCaches.clearCaches) {
         wikilinkCaches.clearCaches();
       }
@@ -295,7 +295,7 @@ module.exports = function(eleventyConfig) {
     "src/assets/images": "src/assets/images",
     "src/assets/fonts": "src/assets/fonts",
     "src/assets/css/highlight-themes": "src/assets/css/highlight-themes",
-    "src/assets/js/colors.config.js": "src/assets/js/colors.config.js"
+    "src/runtime/colors.config.js": "src/runtime/colors.config.js"
   });
   eleventyConfig.addPassthroughCopy("src/admin/");
   
@@ -1228,7 +1228,7 @@ module.exports = function(eleventyConfig) {
         
         // 手动触发WikilinkPlugin的重复检测（确保在报告之前）
         try {
-          const wikilinkPlugin = require('./src/assets/js/plugins/WikilinkPlugin.js');
+          const wikilinkPlugin = require('./src/eleventy-plugins/WikilinkPlugin.js');
           if (wikilinkPlugin.WikilinkPlugin) {
             const pluginInstance = new wikilinkPlugin.WikilinkPlugin({ contentDir: inputDir });
             pluginInstance.performDuplicateCheck();
@@ -1299,7 +1299,7 @@ module.exports = function(eleventyConfig) {
       
       // 手动触发WikilinkPlugin的重复检测（确保在报告之前）
       try {
-        const wikilinkPlugin = require('./src/assets/js/plugins/WikilinkPlugin.js');
+        const wikilinkPlugin = require('./src/eleventy-plugins/WikilinkPlugin.js');
         if (wikilinkPlugin.WikilinkPlugin) {
           const pluginInstance = new wikilinkPlugin.WikilinkPlugin({ contentDir: inputDir });
           pluginInstance.performDuplicateCheck();
