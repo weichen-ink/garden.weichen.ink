@@ -28,10 +28,11 @@ layout: base.njk
     <ul class="notes-list">
       {%- set recentCreated = collections.content | sortByCreated | limit(garden.homepage.recentNotesCount) -%}
       {%- for note in recentCreated -%}
-      {%- if note and note.data and note.data.title -%}
+      {%- if note and note.url -%}
+      {%- set noteTitle = note.data.title or (note.inputPath | split('/') | last | split('.') | first) or 'Untitled' -%}
       <li class="note-item">
-        <a href="{{ note.url }}" class="note-link internal-link">{{ note.data.title }}</a>
-        <time class="note-date">{{ (note.data.created or note.data.date or note.date) | date("MM-DD") }}</time>
+        <a href="{{ note.url }}" class="note-link internal-link">{{ noteTitle }}</a>
+        <time class="note-date">{{ note | getCreatedDate | date("MM-DD") }}</time>
       </li>
       {%- endif -%}
       {%- endfor -%}
@@ -45,10 +46,11 @@ layout: base.njk
     <ul class="notes-list">
       {%- set recentUpdated = collections.content | sortByUpdated | limit(garden.homepage.recentNotesCount) -%}
       {%- for note in recentUpdated -%}
-      {%- if note and note.data and note.data.title -%}
+      {%- if note and note.url -%}
+      {%- set noteTitle = note.data.title or (note.inputPath | split('/') | last | split('.') | first) or 'Untitled' -%}
       <li class="note-item">
-        <a href="{{ note.url }}" class="note-link internal-link">{{ note.data.title }}</a>
-        <time class="note-date">{{ (note.data.updated or note.data.date or note.date) | date("MM-DD") }}</time>
+        <a href="{{ note.url }}" class="note-link internal-link">{{ noteTitle }}</a>
+        <time class="note-date">{{ note | getUpdatedDate | date("MM-DD") }}</time>
       </li>
       {%- endif -%}
       {%- endfor -%}

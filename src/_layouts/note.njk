@@ -22,11 +22,10 @@ layout: base.njk
     <h1 class="note-title">{{ title or (page.fileSlug | split('/') | last) }}</h1>
     
     <div class="note-meta">
-      {% if updated or created or date %}
+      {% set articleObj = { data: { updated: updated, created: created, date: date }, inputPath: page.inputPath } %}
       <time class="note-date">
-        更新于 {{ (updated or created or date) | date("YYYY年MM月DD日") }}
+        更新于 {{ articleObj | getUpdatedDate | date("YYYY年MM月DD日") }}
       </time>
-      {% endif %}
       
       {% if category %}
       <span class="note-category">

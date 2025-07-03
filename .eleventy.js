@@ -54,14 +54,46 @@ if (!global.buildWarningCollector) {
 }
 
 // 简化的时间处理辅助函数
-function getArticleCreatedDate(article, config) {
-  // 优先级：created -> date -> 默认时间
-  return article.data.created || article.data.date || config.defaultCreated;
+function getArticleCreatedDate(article) {
+  // 优先级：created -> date -> 文件创建时间
+  if (article.data.created || article.data.date) {
+    return article.data.created || article.data.date;
+  }
+  
+  // 使用文件系统的创建时间作为fallback
+  if (article.inputPath) {
+    try {
+      const stats = fs.statSync(article.inputPath);
+      // 使用birthtime（创建时间），如果不可用则使用mtime（修改时间）
+      const fileCreatedTime = stats.birthtime.getFullYear() > 1970 ? stats.birthtime : stats.mtime;
+      return fileCreatedTime.toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
+    } catch (error) {
+      // 如果文件不存在或读取失败，使用当前日期
+      return new Date().toISOString().split('T')[0];
+    }
+  }
+  
+  return new Date().toISOString().split('T')[0];
 }
 
-function getArticleUpdatedDate(article, config) {
-  // 优先级：updated -> date -> 创建时间
-  return article.data.updated || article.data.date || getArticleCreatedDate(article, config);
+function getArticleUpdatedDate(article) {
+  // 优先级：updated -> date -> 文件修改时间 -> 创建时间
+  if (article.data.updated || article.data.date) {
+    return article.data.updated || article.data.date;
+  }
+  
+  // 使用文件系统的修改时间作为fallback
+  if (article.inputPath) {
+    try {
+      const stats = fs.statSync(article.inputPath);
+      return stats.mtime.toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
+    } catch (error) {
+      // 如果文件不存在或读取失败，使用创建时间
+      return getArticleCreatedDate(article);
+    }
+  }
+  
+  return getArticleCreatedDate(article);
 }
 
 // 图片搜索函数 - 在content目录中递归搜索图片
@@ -360,6 +392,16 @@ module.exports = function(eleventyConfig) {
     return array.slice(0, limit);
   });
   
+  // 获取文章创建日期的过滤器
+  eleventyConfig.addFilter("getCreatedDate", (article) => {
+    return getArticleCreatedDate(article);
+  });
+  
+  // 获取文章更新日期的过滤器
+  eleventyConfig.addFilter("getUpdatedDate", (article) => {
+    return getArticleUpdatedDate(article);
+  });
+  
   // 首页配置过滤器
   eleventyConfig.addFilter("homepageConfig", (key) => {
     return gardenConfig.homepage && gardenConfig.homepage[key];
@@ -386,8 +428,8 @@ module.exports = function(eleventyConfig) {
   // 按创建时间排序
   eleventyConfig.addFilter("sortByCreated", (collection) => {
     return collection.sort((a, b) => {
-      const aCreated = getArticleCreatedDate(a, gardenConfig);
-      const bCreated = getArticleCreatedDate(b, gardenConfig);
+      const aCreated = getArticleCreatedDate(a);
+      const bCreated = getArticleCreatedDate(b);
       
       const aDate = new Date(aCreated);
       const bDate = new Date(bCreated);
@@ -399,8 +441,8 @@ module.exports = function(eleventyConfig) {
   // 按更新时间排序
   eleventyConfig.addFilter("sortByUpdated", (collection) => {
     return collection.sort((a, b) => {
-      const aUpdated = getArticleUpdatedDate(a, gardenConfig);
-      const bUpdated = getArticleUpdatedDate(b, gardenConfig);
+      const aUpdated = getArticleUpdatedDate(a);
+      const bUpdated = getArticleUpdatedDate(b);
       
       const aDate = new Date(aUpdated);
       const bDate = new Date(bUpdated);
@@ -766,8 +808,8 @@ module.exports = function(eleventyConfig) {
     // 按日期排序每个文件夹的文章
     Object.keys(folderMap).forEach(folder => {
       folderMap[folder].sort((a, b) => {
-        const dateA = getArticleUpdatedDate(a, gardenConfig);
-        const dateB = getArticleUpdatedDate(b, gardenConfig);
+        const dateA = getArticleUpdatedDate(a);
+        const dateB = getArticleUpdatedDate(b);
         return new Date(dateB) - new Date(dateA);
       });
     });
@@ -821,8 +863,8 @@ module.exports = function(eleventyConfig) {
     // 按日期排序每个标签下的文章
     Object.keys(tagMap).forEach(tag => {
       tagMap[tag].sort((a, b) => {
-        const dateA = getArticleUpdatedDate(a, gardenConfig);
-        const dateB = getArticleUpdatedDate(b, gardenConfig);
+        const dateA = getArticleUpdatedDate(a);
+        const dateB = getArticleUpdatedDate(b);
         return new Date(dateB) - new Date(dateA);
       });
     });
@@ -868,8 +910,8 @@ module.exports = function(eleventyConfig) {
     // 按日期排序每个分类下的文章
     Object.keys(categoryMap).forEach(category => {
       categoryMap[category].sort((a, b) => {
-        const dateA = getArticleUpdatedDate(a, gardenConfig);
-        const dateB = getArticleUpdatedDate(b, gardenConfig);
+        const dateA = getArticleUpdatedDate(a);
+        const dateB = getArticleUpdatedDate(b);
         return new Date(dateB) - new Date(dateA);
       });
     });
