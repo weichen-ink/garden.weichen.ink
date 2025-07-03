@@ -252,7 +252,7 @@ class AssetBuilder {
       }
       
       // 处理JS
-      results.js = await this.processJS('src/assets/js/main.js');
+      results.js = await this.processJS('src/runtime/main.js');
       
       if (results.js) {
         assets.push({

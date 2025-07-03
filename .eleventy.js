@@ -5,8 +5,8 @@ const markdownItTaskLists = require("markdown-it-task-lists");
 const markdownItObsidianCallouts = require("markdown-it-obsidian-callouts");
 // 移除旧的语法高亮插件，改用Shiki
 // const syntaxHighlight = require("@11ty/eleventy-plugin-syntaxhighlight");
-const eleventyShikiPlugin = require("./src/assets/js/plugins/EleventyShikiPlugin.js");
-const wikilinkPlugin = require("./src/assets/js/plugins/WikilinkPlugin.js");
+const eleventyShikiPlugin = require("./src/eleventy-plugins/EleventyShikiPlugin.js");
+const wikilinkPlugin = require("./src/eleventy-plugins/WikilinkPlugin.js");
 const fs = require("fs");
 const path = require("path");
 const { minify: htmlMinify } = require("html-minifier-terser");
@@ -45,8 +45,8 @@ const inputDir = "content";  // 内容目录 (用户 markdown 文件)
 const outputDir = "_site";   // 输出目录
 
 // 导入简化的资源构建器和完整的报告系统
-const AssetBuilder = require("./src/utils/AssetBuilder.js");
-const { EnhancedWarningCollector } = require("./src/utils/ReportingSystem.js");
+const AssetBuilder = require("./src/build-tools/AssetBuilder.js");
+const { EnhancedWarningCollector } = require("./src/build-tools/ReportingSystem.js");
 
 // 初始化全局警告收集器（完整功能版本）
 if (!global.buildWarningCollector) {
@@ -160,7 +160,7 @@ module.exports = function(eleventyConfig) {
     global.buildWarningCollector.clear();
     
     try {
-      const wikilinkCaches = require('./src/assets/js/plugins/WikilinkPlugin.js');
+      const wikilinkCaches = require('./src/eleventy-plugins/WikilinkPlugin.js');
       if (wikilinkCaches.clearCaches) {
         wikilinkCaches.clearCaches();
       }
@@ -295,7 +295,7 @@ module.exports = function(eleventyConfig) {
     "src/assets/images": "src/assets/images",
     "src/assets/fonts": "src/assets/fonts",
     "src/assets/css/highlight-themes": "src/assets/css/highlight-themes",
-    "src/assets/js/colors.config.js": "src/assets/js/colors.config.js"
+    "src/runtime/colors.config.js": "src/runtime/colors.config.js"
   });
   eleventyConfig.addPassthroughCopy("src/admin/");
   
@@ -607,6 +607,7 @@ module.exports = function(eleventyConfig) {
       .trim();
     
     // 处理双链 - 将 [[filename]] 转换为对应的标题，使用和wikilink过滤器完全相同的逻辑
+    // 为来自双链的文本添加特殊标记，方便后续识别
     cleanContent = cleanContent.replace(/\[\[([^\]]+)\]\]/g, (match, noteTitle) => {
       // 查找对应的笔记，使用和wikilink完全相同的逻辑
       let targetNote = null;
@@ -628,14 +629,13 @@ module.exports = function(eleventyConfig) {
       }
       
       // 使用和wikilink过滤器相同的标题逻辑
-      if (targetNote) {
-        return (targetNote.data && targetNote.data.title) || 
-               (targetNote.fileSlug && targetNote.fileSlug.split('/').pop()) || 
-               noteTitle;
-      }
+      const resolvedTitle = targetNote ? 
+        ((targetNote.data && targetNote.data.title) || 
+         (targetNote.fileSlug && targetNote.fileSlug.split('/').pop()) || 
+         noteTitle) : noteTitle;
       
-      // 如果找不到对应文件，保留原始文本
-      return noteTitle;
+      // 为来自双链的文本添加特殊标记
+      return `⟪WIKILINK:${resolvedTitle}⟫`;
     });
     
     // 查找包含搜索词的部分
@@ -663,10 +663,25 @@ module.exports = function(eleventyConfig) {
         excerpt = excerpt + '...';
       }
       
-      // 高亮显示搜索词
-      const highlighted = excerpt
-        .replace(new RegExp(searchTerm, 'gi'), 
-          `<mark class="backlink-highlight">${searchTerm}</mark>`);
+      // 智能高亮显示搜索词 - 只高亮来自双链的文本
+      let highlighted = excerpt;
+      
+      // 查找所有来自双链的标记文本
+      const wikilinkPattern = new RegExp(`⟪WIKILINK:([^⟫]*)⟫`, 'gi');
+      highlighted = highlighted.replace(wikilinkPattern, (match, wikilinkText) => {
+        // 检查这个双链文本是否包含搜索词
+        if (wikilinkText.toLowerCase().includes(searchTerm.toLowerCase())) {
+          // 高亮双链中的搜索词
+          const highlightedWikilink = wikilinkText.replace(new RegExp(searchTerm, 'gi'), 
+            `<mark class="backlink-highlight">${searchTerm}</mark>`);
+          return highlightedWikilink;
+        }
+        // 如果不包含搜索词，直接返回原文本（移除标记）
+        return wikilinkText;
+      });
+      
+      // 最后清理掉所有剩余的特殊标记
+      highlighted = highlighted.replace(/⟪WIKILINK:([^⟫]*)⟫/g, '$1');
       
       return highlighted;
     }
@@ -682,7 +697,8 @@ module.exports = function(eleventyConfig) {
   // 📚 集合配置 - 包含所有内容文件（包括子目录）
   // 注意：这里使用 inputDir 变量来引用用户内容目录，而不是 Eleventy 的输入目录
   eleventyConfig.addCollection("content", function(collectionApi) {
-    const mdCollection = collectionApi.getFilteredByGlob(`${inputDir}/**/*.md`); // 扫描用户内容目录下的所有 .md 文件
+    const mdCollection = collectionApi.getFilteredByGlob(`${inputDir}/**/*.md`) // 扫描用户内容目录下的所有 .md 文件
+      .filter(item => !item.data.eleventyExcludeFromCollections); // 排除被标记为排除的文件
     // 保存到全局变量以便搜索数据生成时使用
     allCollections.content = mdCollection;
     return mdCollection;
@@ -923,19 +939,11 @@ module.exports = function(eleventyConfig) {
         generated: new Date().toISOString().split('T')[0]
       };
       
-      // 遍历所有生成的页面，但从collections获取数据
-      results.forEach(result => {
-        if (result.inputPath && result.inputPath.endsWith('.md')) {
-          // 从collections中查找对应的页面数据
-          let pageData = {};
-          if (allCollections.content) {
-            const matchingNote = allCollections.content.find(note => 
-              note.inputPath === result.inputPath
-            );
-            if (matchingNote && matchingNote.data) {
-              pageData = matchingNote.data;
-            }
-          }
+      // 直接使用已过滤的content集合，避免复杂的排除逻辑
+      if (allCollections.content) {
+        allCollections.content.forEach(note => {
+          const result = results.find(r => r.inputPath === note.inputPath);
+          if (!result) return;
           
           const content = result.content || '';
           
@@ -972,13 +980,13 @@ module.exports = function(eleventyConfig) {
           // 获取标题 - 优先文件名，用于索引匹配
           const filename = result.inputPath ? path.basename(result.inputPath, '.md') : 'Untitled';
           const title = filename; // 搜索索引使用文件名作为主要标识符
-          const displayTitle = pageData.title || filename; // displayTitle用于显示
+          const displayTitle = note.data.title || filename; // displayTitle用于显示
           
           // 获取URL
           const url = result.url || '/';
           
           // 获取摘要
-          const excerpt = pageData.description || pageData.excerpt || '';
+          const excerpt = note.data.description || note.data.excerpt || '';
           
           searchData.notes.push({
             title: title, // 使用文件名作为搜索标识符
@@ -987,8 +995,8 @@ module.exports = function(eleventyConfig) {
             content: textContent,
             excerpt: excerpt
           });
-        }
-      });
+        });
+      }
       
       // 写入搜索数据文件
       fs.writeFileSync(searchDataPath, JSON.stringify(searchData, null, 2), 'utf8');
@@ -1220,7 +1228,7 @@ module.exports = function(eleventyConfig) {
         
         // 手动触发WikilinkPlugin的重复检测（确保在报告之前）
         try {
-          const wikilinkPlugin = require('./src/assets/js/plugins/WikilinkPlugin.js');
+          const wikilinkPlugin = require('./src/eleventy-plugins/WikilinkPlugin.js');
           if (wikilinkPlugin.WikilinkPlugin) {
             const pluginInstance = new wikilinkPlugin.WikilinkPlugin({ contentDir: inputDir });
             pluginInstance.performDuplicateCheck();
@@ -1291,7 +1299,7 @@ module.exports = function(eleventyConfig) {
       
       // 手动触发WikilinkPlugin的重复检测（确保在报告之前）
       try {
-        const wikilinkPlugin = require('./src/assets/js/plugins/WikilinkPlugin.js');
+        const wikilinkPlugin = require('./src/eleventy-plugins/WikilinkPlugin.js');
         if (wikilinkPlugin.WikilinkPlugin) {
           const pluginInstance = new wikilinkPlugin.WikilinkPlugin({ contentDir: inputDir });
           pluginInstance.performDuplicateCheck();

@@ -11,7 +11,7 @@
   
   
   <!-- 预加载主要JavaScript -->
-  <link rel="preload" href="{{ 'src/assets/js/main.js' | hash }}" as="script" crossorigin="anonymous">
+  <link rel="preload" href="{{ 'src/runtime/main.js' | hash }}" as="script" crossorigin="anonymous">
 </head>
 <body class="{% if hideSidebar %}no-sidebar{% endif %}{% if not garden.theme.showHeadingMarkers %} hide-heading-markers{% endif %}">
   <!-- 顶部导航 -->
@@ -151,7 +151,7 @@
   </button>
   
   <!-- ES模块化JavaScript -->
-  <script type="module" src="{{ 'src/assets/js/main.js' | hash }}"></script>
+  <script type="module" src="{{ 'src/runtime/main.js' | hash }}"></script>
   
   <!-- 网站统计 -->
   {% include "analytics.njk" %}
