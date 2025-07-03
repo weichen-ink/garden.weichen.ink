@@ -12,7 +12,7 @@
     "preview": "npm run build && npx serve _site",
     "theme:dev": "git switch theme-dev",
     "theme:merge": "git switch main && git merge theme-dev",
-    "theme:push": "git switch theme-dev && git push --force-with-lease upstream HEAD:main && git push origin theme-dev",
+    "theme:push": "git switch theme-dev && git fetch upstream && git push --force-with-lease upstream HEAD:main && git push origin theme-dev",
     "theme:pull": "git switch theme-dev && git pull upstream main",
     "theme:deploy": "npm run theme:push && npm run theme:merge"
   },
