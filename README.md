@@ -149,6 +149,7 @@ tags: [笔记方法, 双链笔记, 效率工具]
 - **[写作指南](content/theme-doc/写作指南.md)** - 掌握高效写作技巧  
 - **[双链笔记](content/theme-doc/双链笔记.md)** - 学会连接知识和想法
 - **[主题配置](content/theme-doc/主题配置.md)** - 个性化你的数字花园
+- **[主题升级指南](content/theme-doc/主题升级指南.md)** - 简单几步升级到最新版本
 - **[常见问题](content/theme-doc/常见问题.md)** - 快速解决使用问题
 
 ## 💡 使用建议
