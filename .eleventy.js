@@ -682,7 +682,8 @@ module.exports = function(eleventyConfig) {
   // 📚 集合配置 - 包含所有内容文件（包括子目录）
   // 注意：这里使用 inputDir 变量来引用用户内容目录，而不是 Eleventy 的输入目录
   eleventyConfig.addCollection("content", function(collectionApi) {
-    const mdCollection = collectionApi.getFilteredByGlob(`${inputDir}/**/*.md`); // 扫描用户内容目录下的所有 .md 文件
+    const mdCollection = collectionApi.getFilteredByGlob(`${inputDir}/**/*.md`) // 扫描用户内容目录下的所有 .md 文件
+      .filter(item => !item.data.eleventyExcludeFromCollections); // 排除被标记为排除的文件
     // 保存到全局变量以便搜索数据生成时使用
     allCollections.content = mdCollection;
     return mdCollection;
@@ -923,19 +924,11 @@ module.exports = function(eleventyConfig) {
         generated: new Date().toISOString().split('T')[0]
       };
       
-      // 遍历所有生成的页面，但从collections获取数据
-      results.forEach(result => {
-        if (result.inputPath && result.inputPath.endsWith('.md')) {
-          // 从collections中查找对应的页面数据
-          let pageData = {};
-          if (allCollections.content) {
-            const matchingNote = allCollections.content.find(note => 
-              note.inputPath === result.inputPath
-            );
-            if (matchingNote && matchingNote.data) {
-              pageData = matchingNote.data;
-            }
-          }
+      // 直接使用已过滤的content集合，避免复杂的排除逻辑
+      if (allCollections.content) {
+        allCollections.content.forEach(note => {
+          const result = results.find(r => r.inputPath === note.inputPath);
+          if (!result) return;
           
           const content = result.content || '';
           
@@ -972,13 +965,13 @@ module.exports = function(eleventyConfig) {
           // 获取标题 - 优先文件名，用于索引匹配
           const filename = result.inputPath ? path.basename(result.inputPath, '.md') : 'Untitled';
           const title = filename; // 搜索索引使用文件名作为主要标识符
-          const displayTitle = pageData.title || filename; // displayTitle用于显示
+          const displayTitle = note.data.title || filename; // displayTitle用于显示
           
           // 获取URL
           const url = result.url || '/';
           
           // 获取摘要
-          const excerpt = pageData.description || pageData.excerpt || '';
+          const excerpt = note.data.description || note.data.excerpt || '';
           
           searchData.notes.push({
             title: title, // 使用文件名作为搜索标识符
@@ -987,8 +980,8 @@ module.exports = function(eleventyConfig) {
             content: textContent,
             excerpt: excerpt
           });
-        }
-      });
+        });
+      }
       
       // 写入搜索数据文件
       fs.writeFileSync(searchDataPath, JSON.stringify(searchData, null, 2), 'utf8');
