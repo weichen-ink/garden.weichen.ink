@@ -5,4 +5,5 @@ layout: article-list.njk
 hideSidebar: true
 listType: "folder"
 permalink: /theme-doc/
+share: true
 ---
