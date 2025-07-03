@@ -6,4 +6,5 @@ hideSidebar: true
 listType: "folder"
 permalink: /theme-doc/
 share: true
+created: 2025-07-01
 ---

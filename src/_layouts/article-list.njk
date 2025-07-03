@@ -81,16 +81,12 @@ hideSidebar: true
       {% for post in posts %}
         <article class="post-item">
           <time class="post-date">
-            {% if post.data.date %}
-              {{ post.data.date | formatDate }}
-            {% else %}
-              {{ "2024-01-01" | formatDate }}
-            {% endif %}
+            {{ post | getUpdatedDate | formatDate }}
           </time>
           
           <div class="post-title">
             <a href="{{ post.url }}" class="post-link internal-link">
-              {{ post.data.title or post.fileSlug }}
+              {{ post.data.title or (post.inputPath | split('/') | last | split('.') | first) or 'Untitled' }}
             </a>
           </div>
           
