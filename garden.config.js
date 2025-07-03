@@ -101,19 +101,19 @@ module.exports = {
   // 网站统计配置
   analytics: {
     // 是否启用网站统计
-    enabled: false,
+    enabled: true,
     
     // 自定义网站统计HTML代码
     // 支持任何统计系统：Google Analytics, 百度统计, Umami, Plausible, 51LA等
     html: `
-      <!-- 在这里添加你的网站统计代码 -->
-      <!-- 示例：Google Analytics 4 -->
-      <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+      <!-- Google tag (gtag.js) -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-XWKPXBBC4D"></script>
       <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'GA_MEASUREMENT_ID');
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-XWKPXBBC4D');
       </script>
     `
   },
