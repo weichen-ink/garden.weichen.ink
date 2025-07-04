@@ -283,8 +283,6 @@ module.exports = function(eleventyConfig) {
       }
       return content;
     });
-    
-    console.log("🗜️  [HTML] HTML压缩已启用");
   }
   
   // 添加内容目录配置
