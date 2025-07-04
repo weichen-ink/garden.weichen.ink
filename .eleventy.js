@@ -284,7 +284,6 @@ module.exports = function(eleventyConfig) {
       return content;
     });
     
-    console.log("🗜️  [HTML] HTML压缩已启用");
   }
   
   // 添加内容目录配置
@@ -668,36 +667,47 @@ module.exports = function(eleventyConfig) {
       .replace(/\s+/g, ' ') // 合并多个空格
       .trim();
     
-    // 处理双链 - 将 [[filename]] 转换为对应的标题，使用和wikilink过滤器完全相同的逻辑
+    // 处理双链 - 将 [[filename]] 或 [[filename|display]] 转换为显示文本
     // 为来自双链的文本添加特殊标记，方便后续识别
-    cleanContent = cleanContent.replace(/\[\[([^\]]+)\]\]/g, (match, noteTitle) => {
-      // 查找对应的笔记，使用和wikilink完全相同的逻辑
-      let targetNote = null;
-      if (collections && collections.content) {
-        // 首先尝试通过文件名匹配（使用inputPath）
-        targetNote = collections.content.find(note => {
-          if (!note.inputPath) return false;
-          const pathParts = note.inputPath.split('/');
-          const filename = pathParts[pathParts.length - 1].replace('.md', '');
-          return filename === noteTitle;
-        });
-        
-        // 如果通过文件名没找到，尝试通过title匹配
-        if (!targetNote) {
-          targetNote = collections.content.find(note => 
-            note.data && note.data.title === noteTitle
-          );
+    cleanContent = cleanContent.replace(/\[\[([^\]]+)\]\]/g, (match, content) => {
+      // 解析双链内容，支持 [[filename]] 和 [[filename|display]] 格式
+      const parts = content.split('|');
+      const filename = parts[0].trim();
+      const displayText = parts.length > 1 ? parts[1].trim() : null;
+      
+      // 如果有显示文本，使用显示文本；否则查找对应的笔记标题
+      if (displayText) {
+        // 对于 [[filename|display]] 格式，直接使用显示文本
+        return `⟪WIKILINK:${displayText}⟫`;
+      } else {
+        // 对于 [[filename]] 格式，查找对应的笔记，使用和wikilink过滤器完全相同的逻辑
+        let targetNote = null;
+        if (collections && collections.content) {
+          // 首先尝试通过文件名匹配（使用inputPath）
+          targetNote = collections.content.find(note => {
+            if (!note.inputPath) return false;
+            const pathParts = note.inputPath.split('/');
+            const noteFilename = pathParts[pathParts.length - 1].replace('.md', '');
+            return noteFilename === filename;
+          });
+          
+          // 如果通过文件名没找到，尝试通过title匹配
+          if (!targetNote) {
+            targetNote = collections.content.find(note => 
+              note.data && note.data.title === filename
+            );
+          }
         }
+        
+        // 使用和wikilink过滤器相同的标题逻辑
+        const resolvedTitle = targetNote ? 
+          ((targetNote.data && targetNote.data.title) || 
+           (targetNote.fileSlug && targetNote.fileSlug.split('/').pop()) || 
+           filename) : filename;
+        
+        // 为来自双链的文本添加特殊标记
+        return `⟪WIKILINK:${resolvedTitle}⟫`;
       }
-      
-      // 使用和wikilink过滤器相同的标题逻辑
-      const resolvedTitle = targetNote ? 
-        ((targetNote.data && targetNote.data.title) || 
-         (targetNote.fileSlug && targetNote.fileSlug.split('/').pop()) || 
-         noteTitle) : noteTitle;
-      
-      // 为来自双链的文本添加特殊标记
-      return `⟪WIKILINK:${resolvedTitle}⟫`;
     });
     
     // 查找包含搜索词的部分
