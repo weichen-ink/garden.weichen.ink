@@ -82,44 +82,66 @@ class LinkProcessor {
   }
 
   /**
-   * 处理图片嵌入 ![[image.png]] 和 ![[image.png|100]] 和 ![[image.png|100x245]]
-   * 支持Obsidian风格的图片尺寸语法
+   * 处理图片嵌入 ![[image.png]] 和 ![[image.png|100]] 和 ![[image.png|100x245]] 和 ![[image.png|这是一个文本]]
+   * 支持Obsidian风格的图片尺寸语法和自定义alt文本
    */
   processImageEmbeds(content) {
     return content.replace(/!\[\[([^\]]+)\]\]/g, (match, fullContent) => {
-      // 解析图片名称和可选的尺寸参数
-      const parts = fullContent.split('|');
-      const imageName = parts[0].trim();
-      const sizeParam = parts[1] ? parts[1].trim() : null;
+      const { fileName, param } = this.parseWikilinkContent(fullContent);
       
       // 检查是否为图片文件
-      if (isImageFile(imageName)) {
-        // 搜索图片在content目录中的实际位置
-        const foundImagePath = this.fileSearcher.findFile(imageName, this.options.contentDir);
+      if (isImageFile(fileName)) {
+        const foundImagePath = this.fileSearcher.findFile(fileName, this.options.contentDir);
+        
         if (foundImagePath) {
-          // 保持完整路径，因为Eleventy将content文件复制到_site/content/
-          const imagePath = `/${foundImagePath}`;
-          const altText = imageName.replace(/\.[^/.]+$/, ""); // 移除扩展名作为alt
-          
-          // 处理尺寸参数
-          let styleAttr = '';
-          if (sizeParam) {
-            const sizeStyles = this.parseSizeParameter(sizeParam);
-            if (sizeStyles) {
-              styleAttr = ` style="${sizeStyles}"`;
-            }
-          }
-          
-          return `<img src="${imagePath}" alt="${altText}" class="content-image"${styleAttr}>`;
+          return this.createImageTag(foundImagePath, fileName, param);
         } else {
-          // 图片不存在，返回占位符
-          const altText = imageName.replace(/\.[^/.]+$/, "");
-          return `<span class="missing-image">[图片不存在: ${altText}]</span>`;
+          return this.createMissingImagePlaceholder(fileName, param);
         }
       }
-      // 如果不是图片，保持原样（或者可以处理为其他类型的嵌入）
+      
+      // 如果不是图片，保持原样
       return match;
     });
+  }
+
+  /**
+   * 解析Wikilink内容，分离文件名和参数
+   * @param {string} content - Wikilink内容，如 "image.png|100" 或 "image.png|alt text"
+   * @returns {Object} - 包含fileName和param的对象
+   */
+  parseWikilinkContent(content) {
+    const parts = content.split('|');
+    return {
+      fileName: parts[0].trim(),
+      param: parts[1] ? parts[1].trim() : null
+    };
+  }
+
+  /**
+   * 检测参数类型：尺寸参数还是alt文本
+   * @param {string} param - 参数字符串
+   * @returns {Object} - 包含类型和值的对象
+   */
+  detectParameterType(param) {
+    if (!param) return { type: 'none', value: null };
+    
+    // 检查是否为尺寸参数：纯数字或数字x数字格式
+    const sizePattern = /^(\d+)(?:x(\d+))?$/;
+    const match = param.match(sizePattern);
+    
+    if (match) {
+      const width = match[1];
+      const height = match[2];
+      const styles = height 
+        ? `width: ${width}px; height: ${height}px;`
+        : `width: ${width}px;`;
+      
+      return { type: 'size', value: styles };
+    }
+    
+    // 不是尺寸参数，当作alt文本处理
+    return { type: 'alt', value: param };
   }
 
   /**
@@ -128,25 +150,47 @@ class LinkProcessor {
    * @returns {string|null} - CSS样式字符串或null
    */
   parseSizeParameter(sizeParam) {
-    if (!sizeParam) return null;
+    const result = this.detectParameterType(sizeParam);
+    return result.type === 'size' ? result.value : null;
+  }
+
+  /**
+   * 创建图片标签
+   * @param {string} imagePath - 图片路径
+   * @param {string} fileName - 原始文件名
+   * @param {string} param - 参数（尺寸或alt文本）
+   * @returns {string} - HTML图片标签
+   */
+  createImageTag(imagePath, fileName, param) {
+    const fullImagePath = `/${imagePath}`;
+    let altText = fileName.replace(/\.[^/.]+$/, ""); // 默认alt为文件名（去扩展名）
+    let styleAttr = '';
     
-    // 匹配 100 或 100x245 格式
-    const widthOnlyMatch = sizeParam.match(/^(\d+)$/);
-    const widthHeightMatch = sizeParam.match(/^(\d+)x(\d+)$/);
-    
-    if (widthOnlyMatch) {
-      // 只有宽度：100
-      const width = widthOnlyMatch[1];
-      return `width: ${width}px;`;
-    } else if (widthHeightMatch) {
-      // 宽度和高度：100x245
-      const width = widthHeightMatch[1];
-      const height = widthHeightMatch[2];
-      return `width: ${width}px; height: ${height}px;`;
+    const paramType = this.detectParameterType(param);
+    if (paramType.type === 'size') {
+      styleAttr = ` style="${paramType.value}"`;
+    } else if (paramType.type === 'alt') {
+      altText = paramType.value;
     }
     
-    // 如果格式不匹配，返回null（忽略无效参数）
-    return null;
+    return `<img src="${fullImagePath}" alt="${altText}" class="content-image"${styleAttr}>`;
+  }
+
+  /**
+   * 创建缺失图片占位符
+   * @param {string} fileName - 原始文件名
+   * @param {string} param - 参数（尺寸或alt文本）
+   * @returns {string} - 缺失图片占位符
+   */
+  createMissingImagePlaceholder(fileName, param) {
+    let altText = fileName.replace(/\.[^/.]+$/, "");
+    
+    const paramType = this.detectParameterType(param);
+    if (paramType.type === 'alt') {
+      altText = paramType.value;
+    }
+    
+    return `<span class="missing-image">[图片不存在: ${altText}]</span>`;
   }
 
   /**

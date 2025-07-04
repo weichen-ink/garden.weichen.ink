@@ -611,10 +611,22 @@ module.exports = function(eleventyConfig) {
           // 检查内容是否包含任何搜索词的双链
           let foundTerm = null;
           for (const term of searchTerms) {
-            const regex = new RegExp(`\\[\\[${term}\\]\\]`, 'gi');
-            if (regex.test(content)) {
-              foundTerm = term;
-              break;
+            // 转义特殊字符以避免正则表达式错误
+            const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // 支持两种双链格式：[[term]] 和 [[term|display]]
+            const regex = new RegExp(`\\[\\[${escapedTerm}(?:\\|[^\\]]*)?\\]\\]`, 'gi');
+            const matches = content.match(regex);
+            if (matches) {
+              // 检查匹配的双链不是图片格式（前面没有!）
+              const hasValidMatch = matches.some(match => {
+                const matchIndex = content.indexOf(match);
+                return matchIndex === 0 || content[matchIndex - 1] !== '!';
+              });
+              
+              if (hasValidMatch) {
+                foundTerm = term;
+                break;
+              }
             }
           }
           
