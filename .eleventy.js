@@ -77,9 +77,17 @@ function getArticleCreatedDate(article) {
 }
 
 function getArticleUpdatedDate(article) {
-  // 优先级：updated -> date -> 文件修改时间 -> 创建时间
-  if (article.data.updated || article.data.date) {
-    return article.data.updated || article.data.date;
+  // 优先级：updated -> date -> created -> 文件修改时间 -> 创建时间
+  if (article.data.updated) {
+    return article.data.updated;
+  }
+  
+  if (article.data.date) {
+    return article.data.date;
+  }
+  
+  if (article.data.created) {
+    return article.data.created;
   }
   
   // 使用文件系统的修改时间作为fallback
