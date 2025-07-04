@@ -503,12 +503,36 @@ module.exports = function(eleventyConfig) {
   // 检查内容是否有标题
   eleventyConfig.addFilter("hasHeadings", (content) => {
     if (!content) return false;
-    // 检查markdown格式的标题
+    
+    // 检查markdown格式的标题 (h1-h6, 包括所有级别)
     const markdownHeadingRegex = /^#{1,6}\s+.+$/gm;
-    // 检查HTML格式的标题
+    // 检查HTML格式的标题 (h1-h6, 但排除页面元素)
     const htmlHeadingRegex = /<h[1-6][^>]*>.*?<\/h[1-6]>/gi;
     
-    return markdownHeadingRegex.test(content) || htmlHeadingRegex.test(content);
+    const hasMarkdownHeadings = markdownHeadingRegex.test(content);
+    const hasHtmlHeadings = htmlHeadingRegex.test(content);
+    
+    // 验证是否真的有实际的标题内容（不是空的或只有空白字符）
+    if (hasMarkdownHeadings) {
+      const matches = content.match(markdownHeadingRegex);
+      return matches && matches.some(match => match.replace(/^#+\s*/, '').trim().length > 0);
+    }
+    
+    if (hasHtmlHeadings) {
+      const matches = content.match(htmlHeadingRegex);
+      // 排除特定的页面元素标题
+      const filteredMatches = matches.filter(match => {
+        const titleText = match.replace(/<[^>]*>/g, '').trim();
+        return titleText && 
+               !titleText.includes('📋 目录') && 
+               !titleText.includes('🔗 反向链接') &&
+               !titleText.includes('class="note-title"') && // 排除页面主标题
+               titleText.length > 0;
+      });
+      return filteredMatches.length > 0;
+    }
+    
+    return false;
   });
   
   // 注意: wikilink过滤器已移至 WikilinkPlugin.js
@@ -595,14 +619,14 @@ module.exports = function(eleventyConfig) {
         try {
           if (!note || note.url === currentNote.url) return;
           
-          // 优先使用已渲染的内容，避免访问 frontMatter
+          // 使用原始内容来查找wikilink，而不是渲染后的HTML
           let content = '';
-          if (note.templateContent) {
-            content = note.templateContent;
+          if (note.rawInput) {
+            content = note.rawInput;
           } else if (note.content) {
             content = note.content;
-          } else if (note.rawInput) {
-            content = note.rawInput;
+          } else if (note.templateContent) {
+            content = note.templateContent;
           }
           
           if (!content) return;
