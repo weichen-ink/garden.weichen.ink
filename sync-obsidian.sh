@@ -64,14 +64,12 @@ log_step() {
 # ThinkPad 配置
 configure_thinkpad() {
     DEVICE_NAME="ThinkPad"
-    OBSIDIAN_REPO="/home/user/Documents/Obsidian"
-    TARGET_REPO="/home/user/Projects/my-digital-garden"
+    OBSIDIAN_REPO="/home/weichen/Desktop/xcz-ob/"
+    TARGET_REPO="/home/weichen/Desktop/Github/garden.weichen.ink/"
     
     # 同步文件夹配置
     SYNC_FOLDERS=(
         "发布笔记:content"
-        "图片资源:static/images"
-        "模板:templates"
     )
     
     # Git 配置
@@ -133,16 +131,27 @@ configure_office() {
 }
 
 # =============================================================================
-# 可用设备列表 - 当添加新设备时，请在这里注册
+# 自动获取可用设备列表
 # =============================================================================
 
-# 设备列表 (设备标识:配置函数名:设备描述)
-AVAILABLE_DEVICES=(
-    "thinkpad:configure_thinkpad:ThinkPad 笔记本"
-    "pc:configure_pc:台式机"
-    "macbook:configure_macbook:MacBook"
-    "office:configure_office:办公室电脑"
-)
+# 自动发现配置函数并生成设备列表
+get_available_devices() {
+    local devices=()
+    
+    # 查找所有 configure_* 函数
+    for func in $(declare -F | grep "configure_" | awk '{print $3}'); do
+        local device_id="${func#configure_}"  # 去掉 configure_ 前缀
+        
+        # 调用函数获取设备名称
+        local device_name
+        eval "$func" 2>/dev/null
+        device_name="$DEVICE_NAME"
+        
+        devices+=("$device_id:$func:$device_name")
+    done
+    
+    printf '%s\n' "${devices[@]}"
+}
 
 # =============================================================================
 # 通用配置 - 适用于所有设备
@@ -171,7 +180,10 @@ show_available_devices() {
     echo "=================="
     
     local index=1
-    for device_info in "${AVAILABLE_DEVICES[@]}"; do
+    local available_devices
+    mapfile -t available_devices < <(get_available_devices)
+    
+    for device_info in "${available_devices[@]}"; do
         IFS=':' read -r device_id configure_func description <<< "$device_info"
         echo "$index) $device_id - $description"
         ((index++))
@@ -186,10 +198,13 @@ select_device() {
     echo -n "请选择设备编号或输入设备ID: "
     read -r choice
     
+    local available_devices
+    mapfile -t available_devices < <(get_available_devices)
+    
     # 检查是否是数字选择
     if [[ "$choice" =~ ^[0-9]+$ ]]; then
-        if [[ $choice -ge 1 && $choice -le ${#AVAILABLE_DEVICES[@]} ]]; then
-            local device_info="${AVAILABLE_DEVICES[$((choice-1))]}"
+        if [[ $choice -ge 1 && $choice -le ${#available_devices[@]} ]]; then
+            local device_info="${available_devices[$((choice-1))]}"
             IFS=':' read -r device_id configure_func description <<< "$device_info"
             echo "$device_id"
         else
@@ -206,7 +221,10 @@ select_device() {
 load_device_config() {
     local target_device="$1"
     
-    for device_info in "${AVAILABLE_DEVICES[@]}"; do
+    local available_devices
+    mapfile -t available_devices < <(get_available_devices)
+    
+    for device_info in "${available_devices[@]}"; do
         IFS=':' read -r device_id configure_func description <<< "$device_info"
         
         if [[ "$device_id" == "$target_device" ]]; then
