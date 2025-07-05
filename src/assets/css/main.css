@@ -1127,6 +1127,9 @@ body {
   color: var(--color-text-muted);
   line-height: var(--leading-normal);
   margin-bottom: 0;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 /* 移动端反向链接卡片字号优化 */
