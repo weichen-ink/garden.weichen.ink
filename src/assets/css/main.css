@@ -203,8 +203,13 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-4) calc(var(--space-4) + var(--space-4));
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
+}
+
+/* 无侧边栏页面使用较窄的header */
+.no-sidebar .header-content {
+  max-width: 800px;
 }
 
 /* 首页header特殊对齐已统一到基础规则中 */
