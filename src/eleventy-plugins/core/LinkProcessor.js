@@ -89,19 +89,25 @@ class LinkProcessor {
     return content.replace(/!\[\[([^\]]+)\]\]/g, (match, fullContent) => {
       const { fileName, param } = this.parseWikilinkContent(fullContent);
       
-      // 检查是否为图片文件
-      if (isImageFile(fileName)) {
-        const foundImagePath = this.fileSearcher.findFile(fileName, this.options.contentDir);
-        
-        if (foundImagePath) {
+      // 先尝试查找文件，无论是否有扩展名
+      const foundImagePath = this.fileSearcher.findFile(fileName, this.options.contentDir);
+      
+      if (foundImagePath) {
+        // 检查找到的文件是否为图片
+        if (isImageFile(foundImagePath)) {
           return this.createImageTag(foundImagePath, fileName, param);
-        } else {
-          return this.createMissingImagePlaceholder(fileName, param);
         }
       }
       
-      // 如果不是图片，保持原样
-      return match;
+      // 如果文件名本身有图片扩展名，但文件不存在
+      if (isImageFile(fileName)) {
+        return this.createMissingImagePlaceholder(fileName, param);
+      }
+      
+      // 如果找到的文件不是图片，或者没找到文件且文件名没有图片扩展名
+      // 创建一个占位符，保持表格结构不被破坏
+      const displayText = param || fileName;
+      return `<span class="missing-image">[图片不存在: ${displayText}]</span>`;
     });
   }
 

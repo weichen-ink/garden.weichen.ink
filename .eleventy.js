@@ -691,6 +691,29 @@ module.exports = function(eleventyConfig) {
       .replace(/\s+/g, ' ') // 合并多个空格
       .trim();
     
+    // 先在原始内容中查找搜索词的位置，然后再处理双链
+    const lowerOriginalContent = cleanContent.toLowerCase();
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    let searchIndex = lowerOriginalContent.indexOf(lowerSearchTerm);
+    
+    // 如果在原始内容中没找到，检查是否在双链中
+    if (searchIndex === -1) {
+      // 查找所有双链格式 [[filename]] 或 [[filename|display]]
+      const wikilinkRegex = /\[\[([^\]]+)\]\]/g;
+      let match;
+      while ((match = wikilinkRegex.exec(cleanContent)) !== null) {
+        const linkContent = match[1];
+        const parts = linkContent.split('|');
+        const filename = parts[0].trim();
+        
+        // 检查搜索词是否匹配双链中的文件名
+        if (filename.toLowerCase() === lowerSearchTerm) {
+          searchIndex = match.index;
+          break;
+        }
+      }
+    }
+    
     // 处理双链 - 将 [[filename]] 或 [[filename|display]] 转换为显示文本
     // 为来自双链的文本添加特殊标记，方便后续识别
     cleanContent = cleanContent.replace(/\[\[([^\]]+)\]\]/g, (match, content) => {
@@ -734,10 +757,11 @@ module.exports = function(eleventyConfig) {
       }
     });
     
-    // 查找包含搜索词的部分
-    const lowerContent = cleanContent.toLowerCase();
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    const searchIndex = lowerContent.indexOf(lowerSearchTerm);
+    // 重新查找处理后内容中搜索词的位置（如果之前没找到的话）
+    if (searchIndex === -1) {
+      const lowerContent = cleanContent.toLowerCase();
+      searchIndex = lowerContent.indexOf(lowerSearchTerm);
+    }
     
     if (searchIndex !== -1) {
       // 找到搜索词的位置，提取前后文本作为摘录
