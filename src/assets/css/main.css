@@ -202,18 +202,15 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-4);
-}
-
-/* 首页header特殊对齐 - 与正文内容文字对齐 */
-.no-sidebar .header-content {
   padding: var(--space-4) calc(var(--space-4) + var(--space-4));
   max-width: 800px;
   margin: 0 auto;
 }
 
-/* 首页header container不需要额外padding */
-.no-sidebar .site-header .container {
+/* 首页header特殊对齐已统一到基础规则中 */
+
+/* 所有页面的header container都需要统一设置 */
+.site-header .container {
   padding: 0;
   max-width: none;
 }
