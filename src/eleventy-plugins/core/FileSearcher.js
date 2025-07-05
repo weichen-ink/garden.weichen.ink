@@ -37,8 +37,18 @@ class FileSearcher {
 
           if (stat.isDirectory()) {
             searchDirectory(fullPath);
-          } else if (file.toLowerCase() === lowerFileName) {
-            foundFiles.push(fullPath);
+          } else {
+            const fileLower = file.toLowerCase();
+            const fileNameWithoutExt = path.parse(file).name.toLowerCase();
+            
+            // 精确匹配文件名
+            if (fileLower === lowerFileName) {
+              foundFiles.push(fullPath);
+            }
+            // 如果查询不包含扩展名，尝试匹配不包含扩展名的文件名
+            else if (!path.extname(fileName) && fileNameWithoutExt === lowerFileName) {
+              foundFiles.push(fullPath);
+            }
           }
         }
       } catch (error) {
@@ -87,8 +97,18 @@ class FileSearcher {
 
           if (stat.isDirectory()) {
             searchDirectory(fullPath);
-          } else if (file.toLowerCase() === lowerFileName) {
-            foundFiles.push(fullPath);
+          } else {
+            const fileLower = file.toLowerCase();
+            const fileNameWithoutExt = path.parse(file).name.toLowerCase();
+            
+            // 精确匹配文件名
+            if (fileLower === lowerFileName) {
+              foundFiles.push(fullPath);
+            }
+            // 如果查询不包含扩展名，尝试匹配不包含扩展名的文件名
+            else if (!path.extname(fileName) && fileNameWithoutExt === lowerFileName) {
+              foundFiles.push(fullPath);
+            }
           }
         }
       } catch (error) {
